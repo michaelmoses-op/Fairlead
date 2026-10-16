@@ -283,10 +283,11 @@ function LanesLanding() {
       <Wires
         color="#1d4ed8"
         lines={[
-          [308, 125, 300, 232],
-          [290, 533, 300, 290],
-          [468, 261, 480, 368],
-          [830, 261, 770, 125],
+          [300, 124, 300, 258],
+          [290, 532, 375, 532, 375, 286],
+          [452, 260, 548, 260, 548, 368],
+          [755, 232, 755, 176, 695, 176, 695, 150],
+          [632, 396, 668, 396, 668, 260],
         ]}
       />
     </div>
@@ -315,10 +316,10 @@ function LanesEditor() {
       <Wires
         color="#1d4ed8"
         lines={[
-          [280, 107, 280, 206],
-          [280, 491, 280, 264],
-          [430, 235, 420, 334],
-          [710, 235, 630, 107],
+          [282, 106, 282, 232],
+          [280, 490, 355, 490, 355, 260],
+          [432, 234, 495, 234, 495, 334],
+          [635, 206, 635, 150, 555, 150, 555, 132],
         ]}
       />
       <aside className="ln-side">
@@ -462,7 +463,13 @@ function Node({
   );
 }
 
-function Wires({ color, lines }: { color: string; lines: [number, number, number, number][] }) {
+function toPoints(line: number[]) {
+  const pairs: string[] = [];
+  for (let i = 0; i < line.length; i += 2) pairs.push(`${line[i]},${line[i + 1]}`);
+  return pairs.join(" ");
+}
+
+function Wires({ color, lines }: { color: string; lines: number[][] }) {
   const id = useId().replace(/:/g, "");
   return (
     <svg className="wire-layer" viewBox="0 0 1120 640">
@@ -472,14 +479,13 @@ function Wires({ color, lines }: { color: string; lines: [number, number, number
         </marker>
       </defs>
       {lines.map((line) => (
-        <line
+        <polyline
           key={line.join("-")}
-          x1={line[0]}
-          y1={line[1]}
-          x2={line[2]}
-          y2={line[3]}
+          points={toPoints(line)}
+          fill="none"
           stroke={color}
           strokeWidth="1.75"
+          strokeLinejoin="round"
           markerEnd={`url(#${id})`}
         />
       ))}
