@@ -1,0 +1,107 @@
+import type { Diagram } from "./types";
+
+/** Orders snapshot. Arrows point the way the data moves. */
+export function sampleDiagram(): Diagram {
+  return {
+    id: "diagram-orders-snapshot",
+    name: "Orders snapshot",
+    cards: [
+      {
+        id: "card-checkout",
+        kind: "person",
+        name: "Checkout",
+        owner: "customers",
+        summary: "Public client that places an order.",
+        notes: "",
+        position: { x: 40, y: 220 },
+      },
+      {
+        id: "card-customer-db",
+        kind: "external-database",
+        name: "Customer DB",
+        owner: "CRM vendor",
+        summary: "Customer rows owned by the CRM.",
+        notes: "",
+        position: { x: 40, y: 0 },
+      },
+      {
+        id: "card-orders-api",
+        kind: "service",
+        name: "Orders API",
+        owner: "orders team",
+        summary: "Accepts the order and writes a snapshot.",
+        notes: "",
+        position: { x: 460, y: 220 },
+      },
+      {
+        id: "card-order-snapshots",
+        kind: "datastore",
+        name: "Order snapshots",
+        owner: "AWS prod",
+        summary: "Snapshots the orders team keeps in AWS.",
+        notes: "",
+        position: { x: 820, y: 430 },
+      },
+      {
+        id: "card-billing",
+        kind: "service",
+        name: "Billing",
+        owner: "billing team",
+        summary: "Builds an invoice from a snapshot.",
+        notes: "",
+        position: { x: 1180, y: 220 },
+      },
+      {
+        id: "card-invoices",
+        kind: "public-api",
+        name: "Invoices",
+        owner: "public edge",
+        summary: "Public edge for invoice JSON.",
+        notes: "",
+        position: { x: 1600, y: 220 },
+      },
+    ],
+    wires: [
+      {
+        id: "wire-order-request",
+        source: "card-checkout",
+        target: "card-orders-api",
+        verb: "receives",
+        payload: "order request",
+        rhythm: "on request",
+      },
+      {
+        id: "wire-customer-row",
+        source: "card-customer-db",
+        target: "card-orders-api",
+        verb: "reads",
+        payload: "customer row",
+        rhythm: "on request",
+      },
+      {
+        id: "wire-write-snapshot",
+        source: "card-orders-api",
+        target: "card-order-snapshots",
+        verb: "writes",
+        payload: "order snapshot",
+        rhythm: "on request",
+      },
+      {
+        id: "wire-read-snapshot",
+        source: "card-order-snapshots",
+        target: "card-billing",
+        verb: "reads",
+        payload: "order snapshot",
+        rhythm: "batch",
+      },
+      {
+        id: "wire-invoice",
+        source: "card-billing",
+        target: "card-invoices",
+        verb: "returns",
+        payload: "invoice JSON",
+        rhythm: "on request",
+      },
+    ],
+  };
+}
