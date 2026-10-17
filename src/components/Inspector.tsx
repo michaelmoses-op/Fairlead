@@ -108,13 +108,14 @@ function CardView({ card }: { card: Card }) {
   return (
     <>
       <p className="inspector-kicker">
-        {info.groupLabel} · {info.label}
+        {info.groupLabel === info.label ? info.groupLabel : `${info.groupLabel} · ${info.label}`}
       </p>
       <h2 className="inspector-title">{card.name.trim() || "Name"}</h2>
       <label className="field">
         <span>Name</span>
         <input
           value={card.name}
+          placeholder={card.kind === "generic" ? "What this is" : undefined}
           onChange={(event) => updateCard(card.id, { name: event.target.value })}
           autoComplete="off"
           spellCheck={false}

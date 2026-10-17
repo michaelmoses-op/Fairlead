@@ -6,7 +6,7 @@ export function createCard(kind: Kind, position: { x: number; y: number }): Card
   return {
     id: createId(),
     kind,
-    name: defaultCardName(kind),
+    name: kind === "generic" ? "" : defaultCardName(kind),
     owner: "",
     summary: "",
     notes: "",

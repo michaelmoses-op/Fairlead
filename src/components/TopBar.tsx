@@ -43,17 +43,22 @@ export function TopBar() {
 
   return (
     <header className="topbar">
-      <Link to="/" className="brand" aria-label="Fairlead home">
-        <Wordmark tone="ink" />
-      </Link>
-      <input
-        className="name-input"
-        aria-label="Diagram name"
-        value={diagram.name}
-        spellCheck={false}
-        onChange={(event) => rename(event.target.value)}
-      />
-      <p className="status">Local chart. Nothing is connected to your cloud.</p>
+      <div className="top-lead">
+        <Link to="/" className="brand" aria-label="Fairlead home">
+          <Wordmark variant="bar" />
+        </Link>
+        <span className="top-slash" aria-hidden="true">
+          /
+        </span>
+        <input
+          className="name-input"
+          aria-label="Diagram name"
+          value={diagram.name}
+          spellCheck={false}
+          onChange={(event) => rename(event.target.value)}
+        />
+        <p className="status">Local chart. Nothing is connected to your cloud.</p>
+      </div>
       <div className="top-actions">
         <div className="menu" ref={menuRef}>
           <button

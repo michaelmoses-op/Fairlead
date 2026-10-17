@@ -10,18 +10,19 @@ export interface KindInfo {
 }
 
 export const GROUP_COLOR: Record<GroupId, string> = {
-  edge: "#f0b429",
-  program: "#79a7ff",
-  store: "#2cb5a0",
-  outside: "#e07a3d",
+  edge: "#FFA9BA",
+  program: "#9DB4FF",
+  store: "#86F0D6",
+  outside: "#FFD39B",
+  generic: "#D4C6FF",
 };
 
 export const VERB_COLOR: Record<Verb, string> = {
-  reads: "#79a7ff",
-  writes: "#f0b429",
-  returns: "#8ec9a0",
-  publishes: "#e07a3d",
-  receives: "#c9d5de",
+  reads: "#FFD39B",
+  writes: "#86F0D6",
+  returns: "#FFA9BA",
+  publishes: "#9DB4FF",
+  receives: "#E4D4FF",
 };
 
 export const VERBS: Verb[] = ["reads", "writes", "returns", "publishes", "receives"];
@@ -120,6 +121,19 @@ export const CATALOG: { id: GroupId; label: string; kinds: KindInfo[] }[] = [
         groupLabel: "Outside",
         label: "External service",
         description: "A system outside the team that gets called.",
+      },
+    ],
+  },
+  {
+    id: "generic",
+    label: "Generic",
+    kinds: [
+      {
+        kind: "generic",
+        group: "generic",
+        groupLabel: "Generic",
+        label: "Generic",
+        description: "A blank card. Fill in the name when nothing else fits.",
       },
     ],
   },

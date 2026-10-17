@@ -1,4 +1,4 @@
-export type GroupId = "edge" | "program" | "store" | "outside";
+export type GroupId = "edge" | "program" | "store" | "outside" | "generic";
 
 export type Kind =
   | "person"
@@ -10,7 +10,8 @@ export type Kind =
   | "cache"
   | "queue"
   | "external-database"
-  | "external-service";
+  | "external-service"
+  | "generic";
 
 export type Verb = "reads" | "writes" | "returns" | "publishes" | "receives";
 

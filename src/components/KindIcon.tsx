@@ -17,6 +17,14 @@ export function KindIcon({ group }: { group: GroupId }) {
       </svg>
     );
   }
+  if (group === "generic") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="5" y="5" width="14" height="14" rx="3" fill="none" stroke="currentColor" strokeWidth="1.7" strokeDasharray="3.2 2.2" />
+        <path d="M8.5 12h7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    );
+  }
   if (group === "store") {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true">

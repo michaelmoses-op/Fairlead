@@ -7,12 +7,15 @@ import {
   Controls,
   MarkerType,
   MiniMap,
+  getSmoothStepPath,
   ReactFlow,
+  SmoothStepEdge,
   useConnection,
   useReactFlow,
   type Connection,
   type Edge,
   type EdgeChange,
+  type EdgeProps,
   type Node,
   type NodeChange,
   type OnConnect,
@@ -24,6 +27,28 @@ import { useCharts } from "../state/charts";
 import { CardNode, type CardNodeData } from "./CardNode";
 
 const nodeTypes = { card: CardNode };
+const edgeTypes = { storm: StormEdge };
+
+function StormEdge(props: EdgeProps) {
+  const { sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style } = props;
+  const [path] = getSmoothStepPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+    borderRadius: 16,
+    offset: 24,
+  });
+  const color = typeof style?.stroke === "string" ? style.stroke : "#9DB4FF";
+  return (
+    <>
+      <path className="edge-underlay" d={path} fill="none" stroke={color} strokeWidth={2.5} strokeOpacity={0.25} />
+      <SmoothStepEdge {...props} />
+    </>
+  );
+}
 
 export function FlowCanvas() {
   const {
@@ -86,23 +111,28 @@ export function FlowCanvas() {
         target: wire.target,
         sourceHandle: "out",
         targetHandle: "in",
-        type: "smoothstep",
+        type: "storm",
         selected,
         reconnectable: true,
         interactionWidth: 18,
         className: activeWires && !activeWires.has(wire.id) ? "is-dim" : undefined,
         label: payload ? `${wire.verb} · ${payload}` : wire.verb,
         labelShowBg: true,
+        animated: true,
         labelStyle: {
-          fill: "#d5e0e8",
+          fill: "#F4F6FC",
           fontSize: 11,
-          fontFamily: '"IBM Plex Mono", ui-monospace, monospace',
+          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
           fontWeight: 500,
         },
-        labelBgStyle: { fill: "#0c141c", fillOpacity: 0.94 },
-        labelBgPadding: [5, 3],
-        labelBgBorderRadius: 4,
-        style: { stroke: color, strokeWidth: selected ? 2.4 : 1.7 },
+        labelBgStyle: { fill: "#2A3249", fillOpacity: 1 },
+        labelBgPadding: [8, 4],
+        labelBgBorderRadius: 11,
+        style: {
+          stroke: color,
+          strokeWidth: selected ? 2.8 : 2.5,
+          filter: `drop-shadow(0 0 5px ${color})`,
+        },
         markerEnd: {
           type: MarkerType.ArrowClosed,
           width: 16,
@@ -150,6 +180,7 @@ export function FlowCanvas() {
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
@@ -198,7 +229,7 @@ export function FlowCanvas() {
         maxZoom={1.5}
         connectionMode={ConnectionMode.Strict}
         connectionLineType={ConnectionLineType.SmoothStep}
-        connectionLineStyle={{ stroke: "#f0b429", strokeWidth: 2 }}
+        connectionLineStyle={{ stroke: "#FF8A4C", strokeWidth: 2.5 }}
         connectionRadius={36}
         deleteKeyCode={["Backspace", "Delete"]}
         selectionOnDrag={false}
@@ -211,14 +242,14 @@ export function FlowCanvas() {
         colorMode="dark"
         elevateNodesOnSelect
       >
-        <Background variant={BackgroundVariant.Dots} gap={22} size={1.3} color="#243444" />
+        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="rgba(157, 180, 255, 0.55)" />
         <Controls showInteractive={false} position="bottom-left" />
         <MiniMap
           pannable
           zoomable
           position="bottom-right"
-          maskColor="rgba(8, 12, 16, 0.72)"
-          bgColor="rgba(8, 12, 16, 0.72)"
+          maskColor="rgba(42, 50, 73, 0.55)"
+          bgColor="#343D58"
           nodeStrokeWidth={0}
           nodeColor={(node) => GROUP_COLOR[groupOf((node.data as CardNodeData).kind)]}
         />
