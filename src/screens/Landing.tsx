@@ -74,7 +74,10 @@ export function Landing() {
                 <path d="M15.5 14.8C18.5 14.5 20 16 20.5 19" />
               </svg>
             </div>
-            <h2>Live Collaboration</h2>
+            <h2 className="feature-title">
+              Live Collaboration
+              <span className="dev-tag">In development</span>
+            </h2>
             <p>Invite your team to review and edit diagrams in real-time. Share high-resolution exports or live links.</p>
           </article>
         </section>

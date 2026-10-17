@@ -12,6 +12,7 @@ import {
   SmoothStepEdge,
   useConnection,
   useReactFlow,
+  useStoreApi,
   type Connection,
   type Edge,
   type EdgeChange,
@@ -30,7 +31,7 @@ const nodeTypes = { card: CardNode };
 const edgeTypes = { storm: StormEdge };
 
 function StormEdge(props: EdgeProps) {
-  const { sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style } = props;
+  const { sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style, selected } = props;
   const [path] = getSmoothStepPath({
     sourceX,
     sourceY,
@@ -44,7 +45,14 @@ function StormEdge(props: EdgeProps) {
   const color = typeof style?.stroke === "string" ? style.stroke : "#9DB4FF";
   return (
     <>
-      <path className="edge-underlay" d={path} fill="none" stroke={color} strokeWidth={2.5} strokeOpacity={0.25} />
+      <path
+        className="edge-underlay"
+        d={path}
+        fill="none"
+        stroke={color}
+        strokeWidth={selected ? 10 : 2.5}
+        strokeOpacity={selected ? 0.55 : 0.25}
+      />
       <SmoothStepEdge {...props} />
     </>
   );
@@ -67,6 +75,7 @@ export function FlowCanvas() {
     setDraft,
   } = useCharts();
   const { screenToFlowPosition, fitView } = useReactFlow();
+  const store = useStoreApi();
   const diagramRef = useRef(diagram);
   diagramRef.current = diagram;
   const reconnectingId = useRef<string | null>(null);
@@ -82,28 +91,36 @@ export function FlowCanvas() {
     return () => window.clearTimeout(timer);
   }, [fitTick]);
 
+  const selectedCardId = selection?.type === "card" ? selection.id : null;
   const nodes = useMemo<Node[]>(() => {
-    return diagram.cards.map((card) => ({
-      id: card.id,
-      type: "card",
-      position: card.position,
-      width: CARD_WIDTH,
-      height: CARD_HEIGHT,
-      selected: selection?.type === "card" && selection.id === card.id,
-      className: activeCards && !activeCards.has(card.id) ? "is-dim" : undefined,
-      data: {
-        kind: card.kind,
-        name: card.name,
-        owner: card.owner,
-      } satisfies CardNodeData,
-      style: { width: CARD_WIDTH, height: CARD_HEIGHT },
-    }));
-  }, [activeCards, diagram.cards, selection]);
+    const lookup = store.getState().nodeLookup;
+    return diagram.cards.map((card) => {
+      const measured = lookup.get(card.id)?.measured;
+      return {
+        id: card.id,
+        type: "card",
+        position: card.position,
+        width: CARD_WIDTH,
+        height: CARD_HEIGHT,
+        selected: card.id === selectedCardId,
+        className: activeCards && !activeCards.has(card.id) ? "is-dim" : undefined,
+        data: {
+          kind: card.kind,
+          name: card.name,
+          owner: card.owner,
+        } satisfies CardNodeData,
+        style: { width: CARD_WIDTH, height: CARD_HEIGHT },
+        ...(measured?.width && measured.height ? { measured: { width: measured.width, height: measured.height } } : {}),
+      };
+    });
+  }, [activeCards, diagram.cards, selectedCardId, store]);
 
   const edges = useMemo<Edge[]>(() => {
     return diagram.wires.map((wire) => {
       const color = VERB_COLOR[wire.verb];
       const selected = selection?.type === "wire" && selection.id === wire.id;
+      const dimmed =
+        (activeWires != null && !activeWires.has(wire.id)) || (selection?.type === "wire" && !selected);
       const payload = wire.payload.trim();
       return {
         id: wire.id,
@@ -113,9 +130,10 @@ export function FlowCanvas() {
         targetHandle: "in",
         type: "storm",
         selected,
+        zIndex: selected ? 12 : 0,
         reconnectable: true,
         interactionWidth: 18,
-        className: activeWires && !activeWires.has(wire.id) ? "is-dim" : undefined,
+        className: dimmed ? "is-dim" : selected ? "is-selected" : undefined,
         label: payload ? `${wire.verb} · ${payload}` : wire.verb,
         labelShowBg: true,
         animated: true,
@@ -123,20 +141,22 @@ export function FlowCanvas() {
           fill: "#F4F6FC",
           fontSize: 11,
           fontFamily: '"JetBrains Mono", ui-monospace, monospace',
-          fontWeight: 500,
+          fontWeight: selected ? 700 : 500,
         },
-        labelBgStyle: { fill: "#2A3249", fillOpacity: 1 },
+        labelBgStyle: selected
+          ? { fill: "#212839", fillOpacity: 1, stroke: color, strokeWidth: 1.5 }
+          : { fill: "#2A3249", fillOpacity: 1 },
         labelBgPadding: [8, 4],
         labelBgBorderRadius: 11,
         style: {
           stroke: color,
-          strokeWidth: selected ? 2.8 : 2.5,
-          filter: `drop-shadow(0 0 5px ${color})`,
+          strokeWidth: selected ? 3.75 : 2.5,
+          filter: selected ? `drop-shadow(0 0 8px ${color})` : `drop-shadow(0 0 5px ${color})`,
         },
         markerEnd: {
           type: MarkerType.ArrowClosed,
-          width: 16,
-          height: 16,
+          width: selected ? 18 : 16,
+          height: selected ? 18 : 16,
           color,
         },
         pathOptions: { borderRadius: 16, offset: 24 },

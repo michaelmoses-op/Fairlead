@@ -54,6 +54,7 @@ export interface ChartsApi {
   newDiagram: () => void;
   duplicate: () => void;
   openDiagram: (id: string) => void;
+  deleteDiagram: (id: string) => void;
   openSample: () => void;
   requestFit: () => void;
   clearDiagram: () => void;
@@ -157,7 +158,11 @@ export function ChartsProvider({ children }: { children: ReactNode }) {
     setStore((prev) => {
       if (prev.viewingSample) {
         const names = prev.diagrams.map((item) => item.name);
-        const forked = cloneDiagram(sampleDiagram(), createId(), uniqueName(sampleDiagram().name, names));
+        const forked = cloneDiagram(
+          sampleDiagram(),
+          createId(),
+          uniqueName(`${sampleDiagram().name} - Copy`, names),
+        );
         return {
           diagrams: [...prev.diagrams, mutate(forked)],
           activeId: forked.id,
@@ -254,6 +259,34 @@ export function ChartsProvider({ children }: { children: ReactNode }) {
         setClearArmed(false);
         setFitTick((tick) => tick + 1);
         leaveSampleUrl();
+      },
+      deleteDiagram: (id: string) => {
+        const removingOpen = !storeRef.current.viewingSample && storeRef.current.activeId === id;
+        setStore((prev) => {
+          const index = prev.diagrams.findIndex((item) => item.id === id);
+          const remaining = prev.diagrams.filter((item) => item.id !== id);
+          if (remaining.length === 0) {
+            const blank = emptyDiagram(createId(), "Untitled");
+            return {
+              diagrams: [blank],
+              activeId: blank.id,
+              viewingSample: prev.viewingSample,
+            };
+          }
+          const neighbor = remaining[Math.max(0, index - 1)] ?? remaining[0];
+          return {
+            diagrams: remaining,
+            activeId: prev.activeId === id ? neighbor.id : prev.activeId,
+            viewingSample: prev.viewingSample && prev.activeId === id ? false : prev.viewingSample,
+          };
+        });
+        if (removingOpen) {
+          setSelection(null);
+          setFocusWireId(null);
+          setClearArmed(false);
+          setFitTick((tick) => tick + 1);
+          leaveSampleUrl();
+        }
       },
       openSample: () => {
         setStore((prev) => ({ ...prev, viewingSample: true }));

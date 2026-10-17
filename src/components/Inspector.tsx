@@ -61,10 +61,10 @@ export function Inspector() {
       <p className="inspector-kicker">Chart</p>
       <h2 className="inspector-title">Reading a chart</h2>
       <p className="inspector-copy">
-        The arrow is the direction data moves. The verb is the action. The payload is what travels.
+        The arrow is the direction data moves. The action is what the wire does. The payload is what travels.
       </p>
       <p className="inspector-copy">
-        Select a card to see what arrives and what leaves. Select a wire to edit its verb and payload.
+        Select a card to see what arrives and what leaves. Select a wire to edit its action and payload.
       </p>
       <p className="inspector-copy">A request and its response are two wires. One wire never means they talk.</p>
     </aside>
@@ -195,7 +195,7 @@ function WireView({ wire }: { wire: Wire }) {
 
   useEffect(() => {
     if (focusWireId !== wire.id) return;
-    const field = document.getElementById("wire-verb");
+    const field = document.getElementById("wire-action");
     if (field instanceof HTMLSelectElement) field.focus();
     clearFocus();
   }, [clearFocus, focusWireId, wire.id]);
@@ -222,9 +222,9 @@ function WireView({ wire }: { wire: Wire }) {
       <p className="inspector-kicker">Wire</p>
       <h2 className="inspector-title">{capitalize(wire.verb)}</h2>
       <p className="inspector-sentence">{preview}</p>
-      <label className="field" htmlFor="wire-verb">
-        <span>Verb</span>
-        <select id="wire-verb" value={wire.verb} onChange={(event) => changeVerb(event.target.value as Verb)}>
+      <label className="field" htmlFor="wire-action">
+        <span>Action</span>
+        <select id="wire-action" value={wire.verb} onChange={(event) => changeVerb(event.target.value as Verb)}>
           {VERBS.map((verb) => (
             <option key={verb} value={verb}>
               {verb}
@@ -232,9 +232,10 @@ function WireView({ wire }: { wire: Wire }) {
           ))}
         </select>
       </label>
-      <label className="field">
+      <label className="field" htmlFor="wire-payload">
         <span>Payload</span>
         <input
+          id="wire-payload"
           value={payload}
           placeholder="customer row"
           autoComplete="off"

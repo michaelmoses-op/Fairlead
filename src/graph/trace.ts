@@ -1,6 +1,6 @@
 import { defaultCardName, KIND_INFO } from "./catalog";
 import { downstreamIds, upstreamIds } from "./reach";
-import type { Diagram, Rhythm, Wire } from "./types";
+import type { Diagram, GroupId, Rhythm, Verb, Wire } from "./types";
 
 export type TraceFocus = { type: "card"; id: string } | { type: "wire"; id: string } | null;
 
@@ -29,32 +29,59 @@ function rhythmPhrase(rhythm: Rhythm | undefined): string {
   return "";
 }
 
+export interface SentencePart {
+  text: string;
+  role: "name" | "verb" | "payload" | "plain";
+  group?: GroupId;
+  verb?: Verb;
+}
+
 /** One sentence. The arrow direction and the sentence describe the same movement. */
 export function wireSentence(diagram: Diagram, wire: Wire): string {
-  const source = cardName(diagram, wire.source);
-  const target = cardName(diagram, wire.target);
-  const payload = wire.payload.trim() || "…";
-  let sentence: string;
+  return `${wireSentenceParts(diagram, wire)
+    .map((part) => part.text)
+    .join(" ")}.`;
+}
+
+export function wireSentenceParts(diagram: Diagram, wire: Wire): SentencePart[] {
+  const source = namePart(diagram, wire.source);
+  const target = namePart(diagram, wire.target);
+  const payload: SentencePart = { text: wire.payload.trim() || "…", role: "payload" };
+  const verb: SentencePart = { text: wire.verb, role: "verb", verb: wire.verb };
+  let parts: SentencePart[];
   switch (wire.verb) {
     case "reads":
-      sentence = `${target} reads ${payload} from ${source}`;
+      parts = [target, verb, payload, plain("from"), source];
       break;
     case "writes":
-      sentence = `${source} writes ${payload} to ${target}`;
+      parts = [source, verb, payload, plain("to"), target];
       break;
     case "returns":
-      sentence = `${source} returns ${payload} to ${target}`;
+      parts = [source, verb, payload, plain("to"), target];
       break;
     case "publishes":
-      sentence = `${source} publishes ${payload} to ${target}`;
+      parts = [source, verb, payload, plain("to"), target];
       break;
     case "receives":
-      sentence = `${target} receives ${payload} from ${source}`;
+      parts = [target, verb, payload, plain("from"), source];
       break;
   }
   const rhythm = rhythmPhrase(wire.rhythm);
-  if (rhythm) sentence = `${sentence} ${rhythm}`;
-  return `${sentence}.`;
+  if (rhythm) parts.push(plain(rhythm));
+  return parts;
+}
+
+function namePart(diagram: Diagram, id: string): SentencePart {
+  const card = diagram.cards.find((item) => item.id === id);
+  return {
+    text: card?.name.trim() || "Unnamed card",
+    role: "name",
+    group: card ? KIND_INFO[card.kind].group : "generic",
+  };
+}
+
+function plain(text: string): SentencePart {
+  return { text, role: "plain" };
 }
 
 function byPosition(diagram: Diagram, a: string, b: string): number {
@@ -141,32 +168,74 @@ function reachLine(diagram: Diagram, cardId: string): string {
   return `Upstream of ${name}: ${upstream}. Downstream: ${downstream}.`;
 }
 
-export function chartNotes(diagram: Diagram): string[] {
-  const notes: string[] = [];
+export type CheckAction = "rename" | "payload" | "select";
+
+export interface ChartCheck {
+  id: string;
+  text: string;
+  action: CheckAction;
+  actionLabel: string;
+  target: { type: "card" | "wire"; id: string };
+}
+
+export function chartChecks(diagram: Diagram): ChartCheck[] {
+  const checks: ChartCheck[] = [];
   for (const card of diagram.cards) {
     const info = KIND_INFO[card.kind];
     if (info.group === "store") {
       const written = diagram.wires.some(
         (wire) => wire.target === card.id && (wire.verb === "writes" || wire.verb === "publishes"),
       );
-      if (!written) notes.push(`${card.name} has nothing written to it.`);
+      if (!written) {
+        checks.push({
+          id: `store-${card.id}`,
+          text: `${card.name} has nothing written to it.`,
+          action: "select",
+          actionLabel: "Select",
+          target: { type: "card", id: card.id },
+        });
+      }
     }
     if (info.group === "program") {
       const linked = diagram.wires.some((wire) => wire.source === card.id || wire.target === card.id);
-      if (!linked) notes.push(`${card.name} has no wires.`);
+      if (!linked) {
+        checks.push({
+          id: `program-${card.id}`,
+          text: `${card.name} has no wires.`,
+          action: "select",
+          actionLabel: "Select",
+          target: { type: "card", id: card.id },
+        });
+      }
     }
   }
   for (const wire of diagram.wires) {
     if (!wire.payload.trim()) {
-      notes.push(`The wire from ${cardName(diagram, wire.source)} to ${cardName(diagram, wire.target)} has no payload.`);
+      checks.push({
+        id: `payload-${wire.id}`,
+        text: `The wire from ${cardName(diagram, wire.source)} to ${cardName(diagram, wire.target)} has no payload.`,
+        action: "payload",
+        actionLabel: "Add payload",
+        target: { type: "wire", id: wire.id },
+      });
     }
   }
   for (const card of diagram.cards) {
     if (card.name.trim() === defaultCardName(card.kind)) {
-      notes.push(`${card.name} still has the default name.`);
+      checks.push({
+        id: `name-${card.id}`,
+        text: `${card.name} still has the default name.`,
+        action: "rename",
+        actionLabel: "Rename",
+        target: { type: "card", id: card.id },
+      });
     }
   }
-  return notes;
+  return checks;
+}
+
+export function chartNotes(diagram: Diagram): string[] {
+  return chartChecks(diagram).map((check) => check.text);
 }
 
 function pack(lines: TraceLine[], diagram: Diagram): TraceView {
