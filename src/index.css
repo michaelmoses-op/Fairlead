@@ -1107,8 +1107,38 @@ body:has(.editor-shell) {
   stroke-dasharray: none;
 }
 
-.edge-underlay {
+.react-flow__edge .edge-underlay,
+.react-flow__edge.animated .edge-underlay {
+  stroke-dasharray: none;
+  animation: none;
   pointer-events: none;
+}
+
+.edge-label {
+  position: absolute;
+  z-index: 13;
+  padding: 4px 8px;
+  border-radius: 11px;
+  background: #2a3249;
+  color: #f4f6fc;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 15px;
+  white-space: nowrap;
+  pointer-events: all;
+  cursor: pointer;
+  user-select: none;
+}
+
+.edge-label.is-selected {
+  z-index: 14;
+  background: #212839;
+  font-weight: 700;
+}
+
+.edge-label.is-dim {
+  opacity: 0.28;
 }
 
 .react-flow__controls {

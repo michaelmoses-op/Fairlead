@@ -7,6 +7,7 @@ import {
   Controls,
   MarkerType,
   MiniMap,
+  EdgeLabelRenderer,
   getSmoothStepPath,
   ReactFlow,
   SmoothStepEdge,
@@ -31,8 +32,9 @@ const nodeTypes = { card: CardNode };
 const edgeTypes = { storm: StormEdge };
 
 function StormEdge(props: EdgeProps) {
-  const { sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style, selected } = props;
-  const [path] = getSmoothStepPath({
+  const { id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style, selected, label } = props;
+  const { select, selection, activeWires } = useCharts();
+  const [path, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
     sourcePosition,
@@ -43,6 +45,9 @@ function StormEdge(props: EdgeProps) {
     offset: 24,
   });
   const color = typeof style?.stroke === "string" ? style.stroke : "#9DB4FF";
+  const text = typeof label === "string" ? label : "";
+  const dimmed =
+    (activeWires != null && !activeWires.has(id)) || (selection?.type === "wire" && selection.id !== id);
   return (
     <>
       <path
@@ -53,7 +58,24 @@ function StormEdge(props: EdgeProps) {
         strokeWidth={selected ? 10 : 2.5}
         strokeOpacity={selected ? 0.55 : 0.25}
       />
-      <SmoothStepEdge {...props} />
+      <SmoothStepEdge {...props} label={undefined} />
+      {text && (
+        <EdgeLabelRenderer>
+          <div
+            className={dimmed ? "edge-label is-dim nopan" : selected ? "edge-label is-selected nopan" : "edge-label nopan"}
+            style={{
+              transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
+              boxShadow: selected ? `inset 0 0 0 1.5px ${color}` : undefined,
+            }}
+            onClick={(event) => {
+              event.stopPropagation();
+              select({ type: "wire", id });
+            }}
+          >
+            {text}
+          </div>
+        </EdgeLabelRenderer>
+      )}
     </>
   );
 }
@@ -109,6 +131,7 @@ export function FlowCanvas() {
           name: card.name,
           owner: card.owner,
         } satisfies CardNodeData,
+        zIndex: 20,
         style: { width: CARD_WIDTH, height: CARD_HEIGHT },
         ...(measured?.width && measured.height ? { measured: { width: measured.width, height: measured.height } } : {}),
       };
